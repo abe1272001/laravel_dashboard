@@ -2,7 +2,7 @@
 @section('content')
   <div class="container vh-100">
     <div class="d-flex flex-column h-100 justify-content-start align-items-center mt-5">
-      <form method="post" action="/login" class="w-50">
+      <form method="post" action="/login" class="w-75">
         @csrf
         <h2>Login Page</h2>
         @if (session('error'))

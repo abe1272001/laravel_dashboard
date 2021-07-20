@@ -62,16 +62,6 @@ class LoginController extends Controller
                 } elseif ($authData->result === 'failure') {  //!驗證失敗
                     return back()->with('error', $authData->message);
                 }
-                // dd($getUserData);
-                //!舊版只含登入
-                // $user = [
-                //     'email'=> $email,
-                //     'password'=> $password,
-                //     'token'=> $body->content
-                // ];
-                // session(['user' => $user]);
-                // dd($user);
-                // return redirect()->route('dashboard');
             }
         }
         catch (ClientException  $e){ //!登入失敗
@@ -80,6 +70,7 @@ class LoginController extends Controller
             $body = json_decode($response);
             if($body->result === 'failure') {
                 // dd($body);
+                $request->flash();
                 return back()->with('error', $body);
             }
             // dd($body);

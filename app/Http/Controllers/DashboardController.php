@@ -41,7 +41,7 @@ class DashboardController extends Controller
                 $users->where('name',  "LIKE",  "%" . $name_query . "%");
             }
             // if(($email_query !== '' && $id_query !== '' && $name_query !== '') {
-            //     $data = $users->paginate(15);
+            //     $data = DB::table('users')->paginate(15);
             //     return view('dashboard.index', ['users'=>$data]);
             // }
             $data = $users->paginate(15)->appends($request->all());

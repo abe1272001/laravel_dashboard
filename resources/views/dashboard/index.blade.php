@@ -1,8 +1,8 @@
 @extends('layouts.app')
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid min-vh-100">
       <div class="row">
-        <nav id="navbarNav" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+        <nav id="navbarNav" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse vh-100">
           <div class="position-sticky pt-3">
             <ul class="nav flex-column">
               <li class="nav-item">
