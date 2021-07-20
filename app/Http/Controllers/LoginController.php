@@ -11,35 +11,20 @@ use GuzzleHttp\Psr7;
 
 class LoginController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
         return view('auth.login');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         //! 這裡寫登入
+        // dd($request);
         try {
             $email = $request->email;
             $password = $request->password;
@@ -49,29 +34,52 @@ class LoginController extends Controller
             //根據status code 做判斷, 基本上這裡是已經登入了
             $body = json_decode($response);
             // dd($body);
-            if($body->result === 'success') { //登入成功
+            if($body->result === 'success') { //*登入成功
                 // abe@project-studio.cc
                 // 202107120312
 
                 //* 登入成功後要取得使用者資料
-                $token = $body->content;
-                // $getUserData = $client->request('GET','http://10.140.0.4:8888/api/auth/me')->getBody();
+                $token = $body->content->token;
+                $getUserData = $client->request('GET','http://10.140.0.4:8888/api/auth/me', [
+                    'headers' => [
+                        'Authorization' => $token
+                    ]
+                ])->getBody();
+
+                $authData = json_decode($getUserData);
+
+                if($authData->result === 'success') { //*驗證成功
+                    $authSession = [
+                        'id' => $authData->content->id,
+                        'name' => $authData->content->name,
+                        'email'=> $authData->content->email,
+                        'token'=> $token
+                    ];
+                    // dd($authSession);
+                    session(['user' => $authSession]);
+                    // dd($authData);
+                    return redirect()->route('dashboard');
+                } elseif ($authData->result === 'failure') {  //!驗證失敗
+                    return back()->with('error', $authData->message);
+                }
                 // dd($getUserData);
-                
-                $user = [
-                    'email'=> $email,
-                    'password'=> $password,
-                    'token'=> $body->content
-                ];
-                session(['user' => $user]);
+                //!舊版只含登入
+                // $user = [
+                //     'email'=> $email,
+                //     'password'=> $password,
+                //     'token'=> $body->content
+                // ];
+                // session(['user' => $user]);
                 // dd($user);
-                return redirect()->route('dashboard');
+                // return redirect()->route('dashboard');
             }
         }
-        catch (ClientException  $e){
+        catch (ClientException  $e){ //!登入失敗
+            // dd($e);
             $response = $e->getResponse()->getBody();
             $body = json_decode($response);
             if($body->result === 'failure') {
+                // dd($body);
                 return back()->with('error', $body);
             }
             // dd($body);
@@ -81,46 +89,54 @@ class LoginController extends Controller
         
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    public function update() //Request $request, $id
     {
-        //
+        //* 寫更新token
+        try {
+            //code...
+            $user = session()->get('user');
+            $client = new Client();
+            // dd($user);
+            $refreshData = $client->request('POST','http://10.140.0.4:8888/api/auth/refresh', [
+                'headers' => [
+                    'Authorization' => $user['token']
+                ]
+            ])->getBody();
+
+            $response = json_decode($refreshData);
+            if($response->result === 'success') { //* refresh 成功
+                // dump($user);
+                $user['token'] = $response->content->token;
+                // dd($user);
+            }
+            // session()->forget('user');
+            // session([
+            //     'user' => $authData
+            // ]);
+            return redirect()->route('dashboard')->with('tokenStatus', $response->result);
+        } catch (ClientException  $e) {
+            //throw $th;
+            $response = $e->getResponse()->getBody();
+            $body = json_decode($response);
+            if($body->result === 'failure') { //! refresh 失敗
+                // dd($body);
+                session()->forget('user');
+                return redirect()->route('login');
+            }
+        }
+        
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy()
     {
         //!這裡寫登出
